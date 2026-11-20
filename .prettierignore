@@ -1,0 +1,8 @@
+# Data and build output
+data/
+**/dist/
+**/node_modules/
+package-lock.json
+
+# Docs are written by hand
+*.md

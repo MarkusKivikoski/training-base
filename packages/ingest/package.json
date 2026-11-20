@@ -1,0 +1,32 @@
+{
+  "name": "@app/ingest",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "sync": "tsx src/cli/sync.ts",
+    "probe": "tsx src/cli/probe.ts",
+    "rebuild": "tsx src/cli/rebuild.ts",
+    "settings": "tsx src/cli/settings.ts",
+    "fit-probe": "tsx src/cli/fitProbe.ts",
+    "check-metrics": "tsx src/cli/checkMetrics.ts",
+    "estimate-lthr": "tsx src/cli/estimateLthr.ts",
+    "check-deleted": "tsx src/cli/checkDeleted.ts"
+  },
+  "dependencies": {
+    "@app/metrics": "*",
+    "@app/shared": "*",
+    "@garmin/fitsdk": "^21.221.0",
+    "yauzl": "^3.4.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/yauzl": "^3.4.0",
+    "vitest": "^5.1.0"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "training-base",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "npm run build -w @app/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "vitest run",
+    "lint": "eslint . && prettier --check .",
+    "sync": "npm run sync -w @app/ingest --",
+    "probe": "npm run probe -w @app/ingest --",
+    "rebuild": "npm run rebuild -w @app/ingest --",
+    "settings": "npm run settings -w @app/ingest --",
+    "fit-probe": "npm run fit-probe -w @app/ingest --",
+    "check-metrics": "npm run check-metrics -w @app/ingest --",
+    "estimate-lthr": "npm run estimate-lthr -w @app/ingest --",
+    "check-deleted": "npm run check-deleted -w @app/ingest --",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "eslint": "^9.39.5",
+    "eslint-plugin-import": "^2.32.0",
+    "prettier": "^3.9.10",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^5.1.0"
+  }
+}

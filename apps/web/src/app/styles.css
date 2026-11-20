@@ -1,0 +1,225 @@
+@import 'tailwindcss';
+
+/*
+ * Chart roles, from the dataviz reference palette. Light and dark are separately
+ * validated steps, not an automatic flip. Charts read these at render time.
+ */
+:root {
+  color-scheme: light;
+  --surface-0: #f4f4f2;
+  --surface-1: #fcfcfb;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #6f6e69;
+  --grid: #e4e3df;
+  --series-1: #2a78d6; /* blue: indoor */
+  --series-2: #eb6834; /* orange: outdoor / HR */
+  --series-3: #1baf7a; /* aqua: cadence */
+  --series-4: #eda100; /* yellow: speed */
+  --series-5: #e87ba4; /* magenta: elevation */
+  /*
+   * Status palette (dataviz reference): fixed in both modes, reserved for training status and
+   * never used as a series colour. Always paired with an icon and a text label.
+   */
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #d03b3b;
+  /* Record podium washes (gold, silver, bronze), used as tinted backgrounds behind ink text. */
+  --medal-1: color-mix(in srgb, #d4a514 22%, transparent);
+  --medal-2: color-mix(in srgb, #8e98a3 20%, transparent);
+  --medal-3: color-mix(in srgb, #b8733a 20%, transparent);
+  /*
+   * Zone ramps (ordinal, one hue each: power blue, heart rate orange), light to dark from Z1 up.
+   * OKLCH lightness in even steps (~0.08 apart) and Z1 at 2:1 or more on the surface; validated
+   * with the dataviz validator (--ordinal). Dark mode runs the other way: Z1 darkest.
+   */
+  --zone-power-1: #73b5ff;
+  --zone-power-2: #5b9def;
+  --zone-power-3: #4384d5;
+  --zone-power-4: #2b6dbb;
+  --zone-power-5: #0f55a2;
+  --zone-power-6: #003f89;
+  --zone-power-7: #002871;
+  --zone-hr-1: #ff9964;
+  --zone-hr-2: #e87b47;
+  --zone-hr-3: #c85f28;
+  --zone-hr-4: #a94200;
+  --zone-hr-5: #8a2400;
+  /*
+   * Workout types (dots in activity lists), easy to hard: grey, blue, green, yellow, orange,
+   * red, purple, and magenta for mixed/race. Always shown with a text label or tooltip.
+   */
+  --workout-recovery: #8e98a3;
+  --workout-endurance: #2a78d6;
+  --workout-tempo: #1baf7a;
+  --workout-sweet-spot: #e0a100;
+  --workout-threshold: #eb6834;
+  --workout-vo2max: #d03b3b;
+  --workout-anaerobic: #8a4fd8;
+  --workout-mixed: #d9579a;
+}
+
+/*
+ * Dark tokens: from the system preference unless the user forced light (data-theme="light"), or
+ * whenever they forced dark (data-theme="dark", see lib/theme.ts). Keep the two blocks identical.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --surface-0: #111110;
+    --surface-1: #1a1a19;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted: #9a998f;
+    --grid: #2e2e2b;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --medal-1: color-mix(in srgb, #e0b22a 24%, transparent);
+    --medal-2: color-mix(in srgb, #a9b3bd 20%, transparent);
+    --medal-3: color-mix(in srgb, #c98446 24%, transparent);
+    --zone-power-1: #0b4c92;
+    --zone-power-2: #2863ab;
+    --zone-power-3: #407bc5;
+    --zone-power-4: #5894e0;
+    --zone-power-5: #70adfb;
+    --zone-power-6: #89c7ff;
+    --zone-power-7: #a2e2ff;
+    --zone-hr-1: #943600;
+    --zone-hr-2: #b55422;
+    --zone-hr-3: #d77343;
+    --zone-hr-4: #f99262;
+    --zone-hr-5: #ffb281;
+    --workout-recovery: #9aa3ad;
+    --workout-endurance: #4f94ea;
+    --workout-tempo: #2fc28c;
+    --workout-sweet-spot: #f0b62a;
+    --workout-threshold: #f5814f;
+    --workout-vo2max: #ec5f5f;
+    --workout-anaerobic: #a679ee;
+    --workout-mixed: #ec7bb4;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --surface-0: #111110;
+  --surface-1: #1a1a19;
+  --text-primary: #f0efec;
+  --text-secondary: #c3c2b7;
+  --text-muted: #9a998f;
+  --grid: #2e2e2b;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --medal-1: color-mix(in srgb, #e0b22a 24%, transparent);
+  --medal-2: color-mix(in srgb, #a9b3bd 20%, transparent);
+  --medal-3: color-mix(in srgb, #c98446 24%, transparent);
+  --zone-power-1: #0b4c92;
+  --zone-power-2: #2863ab;
+  --zone-power-3: #407bc5;
+  --zone-power-4: #5894e0;
+  --zone-power-5: #70adfb;
+  --zone-power-6: #89c7ff;
+  --zone-power-7: #a2e2ff;
+  --zone-hr-1: #943600;
+  --zone-hr-2: #b55422;
+  --zone-hr-3: #d77343;
+  --zone-hr-4: #f99262;
+  --zone-hr-5: #ffb281;
+  --workout-recovery: #9aa3ad;
+  --workout-endurance: #4f94ea;
+  --workout-tempo: #2fc28c;
+  --workout-sweet-spot: #f0b62a;
+  --workout-threshold: #f5814f;
+  --workout-vo2max: #ec5f5f;
+  --workout-anaerobic: #a679ee;
+  --workout-mixed: #ec7bb4;
+}
+
+@theme inline {
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-ink: var(--text-primary);
+  --color-ink-2: var(--text-secondary);
+  --color-ink-3: var(--text-muted);
+  --color-line: var(--grid);
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-series-3: var(--series-3);
+  --color-series-4: var(--series-4);
+  --color-series-5: var(--series-5);
+  --color-status-good: var(--status-good);
+  --color-status-warning: var(--status-warning);
+  --color-status-serious: var(--status-serious);
+  --color-status-critical: var(--status-critical);
+  --color-medal-1: var(--medal-1);
+  --color-medal-2: var(--medal-2);
+  --color-medal-3: var(--medal-3);
+
+  /* A brief highlight that holds, then fades out (a calendar week opened from another page). */
+  --animate-flash-fade: flash-fade 2.4s ease-out forwards;
+  @keyframes flash-fade {
+    0%,
+    40% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+}
+
+body {
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  font-feature-settings: 'tnum';
+}
+
+/*
+ * Zebra rows for every table (and the div-based podium table on Records): a faint ink wash on
+ * every other row. In the base layer, so row hover utilities (hover:bg-surface-0) still win.
+ */
+@layer base {
+  tbody tr:nth-child(even),
+  [role='table'] > [role='row']:nth-child(even) {
+    background-color: var(--row-alt);
+  }
+
+  /* Keep text off the row edges, so the striped rows don't look clipped. */
+  tr > :first-child {
+    padding-left: 0.75rem;
+  }
+  tr > :last-child {
+    padding-right: 0.75rem;
+  }
+  [role='table'] > [role='row'] {
+    padding-inline: 0.75rem;
+  }
+}
+
+:root {
+  --row-alt: color-mix(in srgb, var(--text-primary) 3.5%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --row-alt: color-mix(in srgb, var(--text-primary) 4.5%, transparent);
+  }
+}
+
+:root[data-theme='dark'] {
+  --row-alt: color-mix(in srgb, var(--text-primary) 4.5%, transparent);
+}

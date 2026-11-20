@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // Pure functions only: no Node types, so I/O can't sneak in.
+    "types": []
+  },
+  "include": ["src", "test"]
+}
