@@ -36,6 +36,10 @@ export const usePowerCurves = (today: string | undefined, primary: Preset, compa
     /** Rides with power in the chosen range, once loaded. */
     rideCount: primaryQuery.data?.length,
     isPending: !today || primaryQuery.isPending,
+    /** A comparison range is chosen and its curve hasn't loaded yet. */
+    isComparePending: compare !== 'none' && compareQuery.isPending,
     error: primaryQuery.error,
   };
 };
+
+export type PowerCurves = ReturnType<typeof usePowerCurves>;

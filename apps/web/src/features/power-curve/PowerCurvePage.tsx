@@ -3,6 +3,7 @@ import { useStatus } from '@/shared/api/status';
 import { useTrends } from '@/shared/api/trends';
 import { Vo2maxCard } from '@/shared/charts/markers/Vo2maxCard';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
+import { CopyPowerCurveButton } from './components/CopyPowerCurveButton';
 import { CriticalPowerCard } from './components/cp/CriticalPowerCard';
 import { CurveCard } from './components/curve/CurveCard';
 import { RiderProfileCard } from './components/profile/RiderProfileCard';
@@ -31,6 +32,15 @@ export const PowerCurvePage = () => {
       <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-3">
         <RangeSelect label="Range" value={primary} onChange={setPrimary} />
         <RangeSelect label="Compare with" value={compare} onChange={setCompare} allowNone />
+        <div className="sm:ml-auto">
+          <CopyPowerCurveButton
+            today={today}
+            primary={primary}
+            compare={compare}
+            curves={curves}
+            vo2max={trends.data?.vo2max}
+          />
+        </div>
       </div>
 
       <CurveCard

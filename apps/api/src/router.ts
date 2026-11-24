@@ -18,6 +18,7 @@ import {
 } from '@app/shared';
 import { z } from 'zod';
 import { activitySortSchema, sortActivities, sortOrderSchema } from './activitySort.js';
+import { intervalsRouter } from './routers/intervals.js';
 import { repeatsRouter } from './routers/repeats.js';
 import { rideMergesRouter } from './routers/rideMerges.js';
 import { withWorkoutTypeOverride, workoutTypesRouter } from './routers/workoutTypes.js';
@@ -589,6 +590,8 @@ export const appRouter = t.router({
   rideMerges: rideMergesRouter,
 
   workoutTypes: workoutTypesRouter,
+
+  intervals: intervalsRouter,
 
   garmin: t.router({
     /** Result of the last `npm run check-deleted`: cached activities Garmin no longer lists. */

@@ -191,6 +191,37 @@ export const workoutTypeOverridesFileSchema = z.object({
 
 const activityIdText = z.string().regex(/^[1-9][0-9]*$/);
 
+/** A part of a ride in whole seconds since its start; `endS` is exclusive. */
+export const intervalRangeSchema = z
+  .object({ startS: z.number().int().min(0), endS: z.number().int().min(1) })
+  .refine((range) => range.endS > range.startS, { message: 'an interval must end after it starts' });
+
+const MAX_INTERVALS_PER_RIDE = 300;
+
+const isInOrderWithoutOverlap = (ranges: ReadonlyArray<{ startS: number; endS: number }>) => {
+  for (let i = 1; i < ranges.length; i++) {
+    if (ranges[i]!.startS < ranges[i - 1]!.endS) return false;
+  }
+  return true;
+};
+
+/** One ride's work intervals set by hand: in time order, none overlapping. Empty means "no intervals". */
+export const handSetIntervalsSchema = z
+  .array(intervalRangeSchema)
+  .max(MAX_INTERVALS_PER_RIDE)
+  .refine(isInOrderWithoutOverlap, { message: 'intervals must be in time order and must not overlap' });
+
+/**
+ * settings/intervals.json: work intervals set by hand, by activity id. A ride with an entry shows
+ * exactly these instead of the detected ones; rides without one keep the detected intervals.
+ */
+export const intervalOverridesFileSchema = z.object({
+  schemaVersion: z.literal(SETTINGS_SCHEMA_VERSION),
+  rides: z.record(activityIdText, handSetIntervalsSchema),
+});
+
+export type IntervalRange = z.infer<typeof intervalRangeSchema>;
+
 /** The recordings of one ride, earliest first. The merged ride keeps the first one's id. */
 export const rideMergeSchema = z.array(activityIdText).min(2);
 

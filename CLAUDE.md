@@ -68,6 +68,7 @@ data/
   settings/ride-groups.json         # names given to workouts and routes, rides placed in a workout by hand
   settings/workout-types.json       # workout types set by hand, replacing the detected type
   settings/ride-merges.json         # rides recorded in parts, joined into one (earliest recording first)
+  settings/intervals.json           # work intervals set by hand, replacing the detected ones on a ride
   derived/daily-load.json           # TSS/CTL/ATL/TSB per day
   derived/heatmap.json              # combined, trimmed routes for the heatmap
   derived/repeats.json              # repeated indoor workouts and outdoor routes, every ride of each

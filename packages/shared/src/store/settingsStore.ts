@@ -7,6 +7,7 @@ import {
   DEFAULT_APP_SETTINGS,
   ftpHistorySchema,
   gearFileSchema,
+  intervalOverridesFileSchema,
   lthrHistorySchema,
   planFileSchema,
   rideMergesFileSchema,
@@ -19,6 +20,7 @@ import {
   type FtpEntry,
   type GearFile,
   type Goal,
+  type IntervalRange,
   type LthrEntry,
   type PlanFile,
   type RideMerge,
@@ -42,6 +44,7 @@ export function createSettingsStore(dataDir: string) {
   const rideGroupsFile = path.join(dataDir, 'settings', 'ride-groups.json');
   const workoutTypesFile = path.join(dataDir, 'settings', 'workout-types.json');
   const rideMergesFile = path.join(dataDir, 'settings', 'ride-merges.json');
+  const intervalsFile = path.join(dataDir, 'settings', 'intervals.json');
   const empty = () => ({ schemaVersion: SETTINGS_SCHEMA_VERSION, entries: [] as never[] });
 
   return {
@@ -94,6 +97,21 @@ export function createSettingsStore(dataDir: string) {
       await writeJsonFile(
         workoutTypesFile,
         workoutTypeOverridesFileSchema.parse({ schemaVersion: SETTINGS_SCHEMA_VERSION, overrides }),
+      );
+    },
+    /** Work intervals set by hand, by activity id; they replace the detected ones on that ride. */
+    async readIntervalOverrides(): Promise<Record<string, IntervalRange[]>> {
+      const empty = () => ({ schemaVersion: SETTINGS_SCHEMA_VERSION, rides: {} });
+      return (await readJsonFile(intervalsFile, intervalOverridesFileSchema, empty)).rides;
+    },
+    /** Sets one ride's intervals by hand (an empty list for none); null goes back to the detected ones. */
+    async setIntervalOverride(id: string, intervals: readonly IntervalRange[] | null): Promise<void> {
+      const rides = { ...(await this.readIntervalOverrides()) };
+      if (intervals === null) delete rides[id];
+      else rides[id] = [...intervals];
+      await writeJsonFile(
+        intervalsFile,
+        intervalOverridesFileSchema.parse({ schemaVersion: SETTINGS_SCHEMA_VERSION, rides }),
       );
     },
     /** Rides joined from several recordings, each earliest part first; none when there is no file yet. */

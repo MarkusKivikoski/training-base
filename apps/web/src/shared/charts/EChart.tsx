@@ -41,8 +41,9 @@ type EChartProps = {
   ariaLabel: string;
   onClick?: (event: ChartClick) => void;
   /**
-   * Index of the category on the first x-axis when anywhere inside a grid is clicked, not only
-   * a bar: short or empty bars are hard to hit. The pointer shows a hand over the grids.
+   * The first x-axis value when anywhere inside a grid is clicked, not only a bar: short or empty
+   * bars are hard to hit. On a category axis that is the category's index; on a value axis, the
+   * value under the pointer. The pointer shows a hand over the grids.
    */
   onCategoryClick?: ((index: number) => void) | undefined;
   /** The x-axis value under the crosshair, or null when the pointer leaves the chart. */

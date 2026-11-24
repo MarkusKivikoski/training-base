@@ -5,8 +5,9 @@ import type { ActivityStreams } from '@/shared/api/client';
 import { useColorScheme } from '@/shared/charts/chartTheme';
 import { EChart } from '@/shared/charts/EChart';
 import { Toggle } from '@/shared/ui/Toggle';
+import type { DraftMark } from '../../lib/intervalEdits';
 import { MinuteTable } from './MinuteTable';
-import { rideChartOption } from './rideChartOption';
+import { rideChartOption, type ZoomWindow } from './rideChartOption';
 import { CHART_TOP, chartHeight, PANEL_HEIGHT, visiblePanels } from './ridePanels';
 
 type View = 'chart' | 'table';
@@ -31,7 +32,14 @@ type RideChartsProps = {
   climbs?: readonly TimeRange[] | undefined;
   /** Time not recorded between the recordings of a merged ride, shaded on every panel. */
   recordingGaps?: readonly TimeRange[] | undefined;
+  /** The interval being added or trimmed, outlined on the power panel. */
+  draftInterval?: DraftMark | null | undefined;
+  /** While set, a click on the chart picks that time (seconds into the ride) for the draft interval. */
+  onPickTime?: ((seconds: number) => void) | undefined;
 };
+
+const ZOOM_HINT = 'Drag the slider handles to zoom, the middle to pan · hover for values';
+const PICK_HINT = 'Click the chart to pick the interval’s start and end · drag the slider handles to zoom in';
 
 /** Power, heart rate, cadence, speed and elevation stacked on one time axis, or as a minute table. */
 export const RideCharts = ({
@@ -42,12 +50,20 @@ export const RideCharts = ({
   intervals = NO_RANGES,
   climbs = NO_RANGES,
   recordingGaps = NO_RANGES,
+  draftInterval = null,
+  onPickTime,
 }: RideChartsProps) => {
   const colorScheme = useColorScheme();
   const [view, setView] = useState<View>('chart');
   const chart = useRef<ECharts | null>(null);
+  // The slider's window, so redrawing (a picked time, a saved interval, the colour scheme) keeps the zoom.
+  const zoom = useRef<ZoomWindow | null>(null);
   const setInstance = useCallback((instance: ECharts | null) => {
     chart.current = instance;
+    instance?.on('datazoom', () => {
+      const [slider] = (instance.getOption()['dataZoom'] as ZoomWindow[] | undefined) ?? [];
+      if (slider) zoom.current = { start: slider.start, end: slider.end };
+    });
   }, []);
 
   // Follow the map: show the tooltip at the hovered time.
@@ -66,18 +82,22 @@ export const RideCharts = ({
 
   // Colours are read from CSS variables, so the option is rebuilt when the colour scheme changes.
   const option = useMemo(
-    () => rideChartOption({ stream, panels, intervals, climbs, recordingGaps }),
-    [stream, panels, intervals, climbs, recordingGaps, colorScheme],
+    () =>
+      rideChartOption({ stream, panels, intervals, climbs, recordingGaps, draft: draftInterval, zoom: zoom.current }),
+    [stream, panels, intervals, climbs, recordingGaps, draftInterval, colorScheme],
   );
 
   if (panels.length === 0) return <p className="text-sm text-ink-3">No sensor data recorded.</p>;
 
   const panelNames = panels.map((panel) => panel.title).join(', ');
+  const isPicking = onPickTime !== undefined && view === 'chart';
 
   return (
     <div>
       <div className="mb-2 flex items-center justify-between gap-3">
-        <p className="text-xs text-ink-3">Drag the slider handles to zoom, the middle to pan · hover for values</p>
+        <p className={`text-xs ${isPicking ? 'font-medium text-ink' : 'text-ink-3'}`}>
+          {isPicking ? PICK_HINT : ZOOM_HINT}
+        </p>
         <Toggle label="Ride chart view" value={view} onChange={setView} options={VIEW_OPTIONS} />
       </div>
       {view === 'chart' ? (
@@ -86,6 +106,7 @@ export const RideCharts = ({
           className=""
           style={{ height: chartHeight(panels.length) }}
           onAxisHover={onHoverTime}
+          onCategoryClick={onPickTime}
           instanceRef={setInstance}
           ariaLabel={`Ride charts: ${panelNames} over time. Switch to the table view for values.`}
         />

@@ -2,6 +2,7 @@ import type { TimeRange } from '@app/metrics';
 import type { ActivityStreams } from '@/shared/api/client';
 import { cssVar } from '@/shared/charts/chartTheme';
 import { EMPTY, formatClock } from '@/shared/lib/formatters';
+import type { DraftMark } from '../../lib/intervalEdits';
 import { indexAtTime, toChartPoints } from '../../lib/streamPoints';
 import { CHART_TOP, PANEL_GAP, PANEL_HEIGHT, type RidePanel } from './ridePanels';
 
@@ -11,7 +12,13 @@ type RideChartInput = {
   intervals: readonly TimeRange[];
   climbs: readonly TimeRange[];
   recordingGaps: readonly TimeRange[];
+  /** The interval being added or trimmed, outlined on the power panel. */
+  draft: DraftMark | null;
+  /** The zoom to keep (percent of the ride), so redrawing doesn't reset it. */
+  zoom: ZoomWindow | null;
 };
+
+export type ZoomWindow = { start: number; end: number };
 
 const tooltipFormatter =
   (stream: ActivityStreams, panels: readonly RidePanel[]) => (params: Array<{ axisValue: number }>) => {
@@ -49,6 +56,38 @@ const intervalAreas = (color: string, labelColor: string, intervals: readonly Ti
     { xAxis: range.endS },
   ]);
 
+const DRAFT_LABEL = { show: true, fontSize: 10, fontWeight: 'bold' };
+
+/** The interval being added or trimmed, outlined on the power panel once it has an end. */
+const draftAreas = (color: string, draft: DraftMark | null) => {
+  if (draft === null || draft.endS === null) return [];
+  return [
+    [
+      {
+        xAxis: draft.startS,
+        name: draft.label,
+        itemStyle: { color, opacity: 0.08, borderColor: color, borderWidth: 1.5, borderType: 'dashed' },
+        label: { ...DRAFT_LABEL, color, position: 'insideBottom' },
+      },
+      { xAxis: draft.endS },
+    ],
+  ];
+};
+
+/** A line at the draft's start while its end is still to pick. */
+const draftStartLine = (color: string, draft: DraftMark | null) => {
+  if (draft === null || draft.endS !== null) return {};
+  return {
+    markLine: {
+      silent: true,
+      symbol: 'none',
+      lineStyle: { color, type: 'dashed', width: 1.5 },
+      label: { ...DRAFT_LABEL, color, position: 'insideEndTop', formatter: `${draft.label}: start` },
+      data: [{ xAxis: draft.startS }],
+    },
+  };
+};
+
 /** Time not recorded between the recordings of a merged ride, on every panel; labelled on the top one. */
 const recordingGapAreas = (color: string, labelColor: string, gaps: readonly TimeRange[], isTopPanel: boolean) =>
   gaps.map((range) => [
@@ -64,16 +103,18 @@ const recordingGapAreas = (color: string, labelColor: string, gaps: readonly Tim
 const panelSeries = (
   panel: RidePanel,
   i: number,
-  { stream, intervals, climbs, recordingGaps }: RideChartInput,
+  { stream, intervals, climbs, recordingGaps, draft }: RideChartInput,
   ink2: string,
   ink3: string,
 ) => {
   const color = cssVar(panel.slot);
+  const draftColor = cssVar('--text-primary');
   const isElevation = panel.key === 'altitude';
   const isPower = panel.key === 'power';
   const areas = [
     ...(isElevation ? climbAreas(color, climbs) : []),
     ...(isPower ? intervalAreas(color, ink2, intervals) : []),
+    ...(isPower ? draftAreas(draftColor, draft) : []),
     ...recordingGapAreas(ink3, ink2, recordingGaps, i === 0),
   ];
 
@@ -90,6 +131,7 @@ const panelSeries = (
     itemStyle: { color },
     ...(isElevation ? { areaStyle: { color, opacity: 0.15 } } : {}),
     ...(areas.length > 0 ? { markArea: { silent: true, data: areas } } : {}),
+    ...(isPower ? draftStartLine(draftColor, draft) : {}),
   };
 };
 
@@ -162,6 +204,7 @@ export const rideChartOption = (input: RideChartInput) => {
         borderColor: grid,
         textStyle: { color: ink3 },
         labelFormatter: (seconds: number) => formatClock(seconds),
+        ...(input.zoom ?? {}),
       },
     ],
     series: panels.map((panel, i) => panelSeries(panel, i, input, ink2, ink3)),

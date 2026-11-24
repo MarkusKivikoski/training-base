@@ -2,6 +2,7 @@ import type { TimeRange } from '@app/metrics';
 import type { ActivityStreams } from '@/shared/api/client';
 import { Card } from '@/shared/ui/Card';
 import { Loading } from '@/shared/ui/Loading';
+import type { DraftMark } from '../../lib/intervalEdits';
 import { RideCharts } from './RideCharts';
 
 type RideDataCardProps = {
@@ -15,6 +16,10 @@ type RideDataCardProps = {
   climbs: readonly TimeRange[];
   /** Time not recorded between the recordings of a merged ride. */
   recordingGaps: readonly TimeRange[];
+  /** The interval being added or trimmed. */
+  draftInterval: DraftMark | null;
+  /** While an interval is being added or trimmed: a click on the chart picks a time for it. */
+  onPickTime: ((seconds: number) => void) | undefined;
 };
 
 /** The per-second ride charts, or why there are none. */

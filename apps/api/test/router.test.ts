@@ -815,6 +815,44 @@ describe('workoutTypes', () => {
   });
 });
 
+describe('intervals', () => {
+  it('stores a ride’s intervals set by hand, including none, until it goes back to detection', async () => {
+    const c = caller();
+    expect(await c.intervals.forActivity({ id: '7' })).toBeNull();
+
+    const intervals = [
+      { startS: 60, endS: 360 },
+      { startS: 480, endS: 780 },
+    ];
+    expect(await c.intervals.set({ id: '7', intervals })).toEqual(intervals);
+    expect(await c.intervals.forActivity({ id: '7' })).toEqual(intervals);
+    expect(await c.intervals.forActivity({ id: '8' })).toBeNull();
+
+    await c.intervals.set({ id: '7', intervals: [] });
+    expect(await c.intervals.forActivity({ id: '7' })).toEqual([]);
+
+    await c.intervals.set({ id: '7', intervals: null });
+    expect(await c.intervals.forActivity({ id: '7' })).toBeNull();
+  });
+
+  it('rejects intervals that overlap, are out of order or end before they start', async () => {
+    const c = caller();
+    const overlapping = [
+      { startS: 60, endS: 400 },
+      { startS: 300, endS: 600 },
+    ];
+    const outOfOrder = [
+      { startS: 500, endS: 600 },
+      { startS: 60, endS: 120 },
+    ];
+    await expect(c.intervals.set({ id: '7', intervals: overlapping })).rejects.toThrow(/overlap/);
+    await expect(c.intervals.set({ id: '7', intervals: outOfOrder })).rejects.toThrow(/order/);
+    await expect(c.intervals.set({ id: '7', intervals: [{ startS: 90, endS: 90 }] })).rejects.toThrow();
+    await expect(c.intervals.set({ id: '7', intervals: [{ startS: 1.5, endS: 90 }] })).rejects.toThrow();
+    expect(await c.intervals.forActivity({ id: '7' })).toBeNull();
+  });
+});
+
 describe('plan', () => {
   it('starts empty with default presets, then adds, replaces and removes sessions', async () => {
     const c = caller();

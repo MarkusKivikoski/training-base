@@ -10,11 +10,11 @@ import { ActivityClimbsCard } from './components/detail/ActivityClimbsCard';
 import { ActivityRecordsCard } from './components/detail/ActivityRecordsCard';
 import { DeletedInGarminNote } from './components/detail/DeletedInGarminNote';
 import { FeelCard } from './components/detail/FeelCard';
-import { IntervalsCard } from './components/detail/IntervalsCard';
 import { PowerCard } from './components/detail/PowerCard';
 import { RideHeader } from './components/detail/RideHeader';
 import { SummaryCard } from './components/detail/SummaryCard';
 import { TrainingLoadCard } from './components/detail/TrainingLoadCard';
+import { IntervalsCard } from './components/intervals/IntervalsCard';
 import { MergedRideNote } from './components/merge/MergedRideNote';
 import { MergeRidePanel } from './components/merge/MergeRidePanel';
 import { PastEffortsCard } from './components/past-efforts/PastEffortsCard';
@@ -22,8 +22,9 @@ import { RouteEffortsCard } from './components/past-efforts/RouteEffortsCard';
 import { RideDataCard } from './components/ride-charts/RideDataCard';
 import { RouteCard } from './components/route-map/RouteCard';
 import { ZonesCard } from './components/zones/ZonesCard';
+import { useIntervalEditor } from './hooks/useIntervalEditor';
 import { recordingGapDurations, recordingGapRanges } from './lib/recordingGaps';
-import { climbRanges, intervalFtp, workIntervals } from './lib/rideIntervals';
+import { climbRanges, intervalFtp } from './lib/rideIntervals';
 
 const route = getRouteApi('/activities/$activityId');
 
@@ -46,7 +47,7 @@ export const ActivityDetailPage = () => {
   const [mapTime, setMapTime] = useState<number | null>(null);
 
   const ftp = activity ? intervalFtp(activity) : null;
-  const intervals = useMemo(() => (streams.data ? workIntervals(streams.data, ftp) : []), [streams.data, ftp]);
+  const intervalEditor = useIntervalEditor(activityId, streams.data, ftp);
   const climbs = useMemo(() => climbRanges(rideClimbs.data ?? []), [rideClimbs.data]);
   const mergedFrom = activity?.mergedFrom ?? null;
   const streamGaps = useMemo(
@@ -95,23 +96,27 @@ export const ActivityDetailPage = () => {
         <FeelCard key={activity.id} activity={activity} />
         {discipline && <ActivityRecordsCard activityId={activity.id} discipline={discipline} />}
         <ZonesCard activity={activity} />
-        {streams.data && (
-          <IntervalsCard stream={streams.data} intervals={intervals} ftp={ftp} isIndoor={activity.isIndoor} />
+        {streams.data && intervalEditor.isLoaded && (
+          <IntervalsCard stream={streams.data} editor={intervalEditor} ftp={ftp} isIndoor={activity.isIndoor} />
         )}
         {activity.isIndoor && activity.hasPower && <PastEffortsCard activityId={activity.id} />}
         {activity.isCycling && !activity.isIndoor && <RouteEffortsCard activityId={activity.id} />}
         {!activity.isIndoor && <ActivityClimbsCard activityId={activity.id} />}
         {gpsStream && <RouteCard stream={gpsStream} markerTime={mapTime ?? chartTime} onHoverTime={setMapTime} />}
+        {/* Keyed on the ride, so the chart's remembered zoom starts fresh on another one. */}
         <RideDataCard
+          key={activity.id}
           stream={streams.data}
           isPending={streams.isPending}
           hasError={Boolean(streams.error)}
           showPower={activity.hasPower}
           onHoverTime={setChartTime}
           highlightTime={mapTime}
-          intervals={intervals}
+          intervals={intervalEditor.intervals}
           climbs={climbs}
           recordingGaps={streamGaps ?? NO_GAPS}
+          draftInterval={intervalEditor.chartMark}
+          onPickTime={intervalEditor.pickTime}
         />
       </div>
     </div>

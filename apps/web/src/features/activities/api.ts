@@ -1,3 +1,4 @@
+import type { TimeRange } from '@app/metrics';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { activityKeys } from '@/shared/api/activities';
 import { trpc, type ActivityListInput } from '@/shared/api/client';
@@ -68,6 +69,30 @@ export const useSetWorkoutType = () => {
   return useMutation({
     mutationFn: (input: { id: string; type: WorkoutType | null }) => trpc.workoutTypes.set.mutate(input),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: activityKeys.all }),
+  });
+};
+
+export const intervalKeys = {
+  all: ['intervals'] as const,
+  activity: (id: string) => [...intervalKeys.all, 'activity', id] as const,
+};
+
+/** The ride's work intervals set by hand, or null when it shows the detected ones. */
+export const useHandSetIntervals = (id: string) =>
+  useQuery({
+    queryKey: intervalKeys.activity(id),
+    queryFn: () => trpc.intervals.forActivity.query({ id }),
+  });
+
+/**
+ * Sets a ride's intervals by hand (in time order, none overlapping), or goes back to the detected
+ * ones (null). The saved list replaces the cached one; nothing is recomputed.
+ */
+export const useSetIntervals = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { id: string; intervals: TimeRange[] | null }) => trpc.intervals.set.mutate(input),
+    onSuccess: (intervals, input) => queryClient.setQueryData(intervalKeys.activity(input.id), intervals),
   });
 };
 
